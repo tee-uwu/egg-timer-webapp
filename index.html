@@ -225,6 +225,9 @@
     <div id="window-content" class="window-content"></div>
   </div>
 
+  <!-- ✅ Alarm audio (keep alarm.mp3 in the SAME folder as this HTML) -->
+  <audio id="alarm-audio" src="alarm.mp3" preload="auto"></audio>
+
   <script>
     // --- State ---
     let currentState = "start";
@@ -235,10 +238,10 @@
 
     // ✅ IMPORTANT: icons are in the SAME folder as this HTML (no "images/" prefix)
     const EGG_OPTIONS = [
-      { id: "soft",      name: "Soft Boiled",  time: 300, iconUrl: "icon-soft.png",      description: "Runny yolk, set white" },
-      { id: "medium",    name: "Medium Boiled",time: 480, iconUrl: "icon-medium.png",    description: "Jammy yolk, firm white" },
-      { id: "hard",      name: "Hard Boiled",  time: 600, iconUrl: "icon-hard.png",      description: "Fully set, firm" },
-      { id: "scrambled", name: "Scrambled",    time: 120, iconUrl: "icon-scrambled.png", description: "Quick & easy" }
+      { id: "soft",      name: "Soft Boiled",   time: 300, iconUrl: "icon-soft.png",      description: "Runny yolk, set white" },
+      { id: "medium",    name: "Medium Boiled", time: 480, iconUrl: "icon-medium.png",    description: "Jammy yolk, firm white" },
+      { id: "hard",      name: "Hard Boiled",   time: 600, iconUrl: "icon-hard.png",      description: "Fully set, firm" },
+      { id: "scrambled", name: "Scrambled",     time: 120, iconUrl: "icon-scrambled.png", description: "Quick & easy" }
     ];
 
     // Generic icons (same folder)
@@ -262,6 +265,27 @@
     // If an image path is wrong, show nothing instead of broken icon box
     function imgFallback(el){
       el.style.display = "none";
+    }
+
+    // --- Alarm ---
+    function getAlarmEl(){
+      return document.getElementById("alarm-audio");
+    }
+
+    function playAlarm(){
+      const a = getAlarmEl();
+      if (!a) return;
+      a.currentTime = 0; // restart
+      a.play().catch(() => {
+        // Some browsers may block audio if no user gesture; Start button usually counts.
+      });
+    }
+
+    function stopAlarm(){
+      const a = getAlarmEl();
+      if (!a) return;
+      a.pause();
+      a.currentTime = 0;
     }
 
     // --- Screens ---
@@ -318,6 +342,7 @@
 
     // --- Timer ---
     function startCountdown(duration, name){
+      stopAlarm(); // stop any previous alarm
       selectedEgg = name;
       timeLeft = duration;
 
@@ -333,15 +358,18 @@
           clearInterval(timerInterval);
           timerInterval = null;
           renderFinishedScreen();
+          playAlarm(); // ✅ play alarm when done
         }
       }, 1000);
     }
 
     function snoozeTimer(){
+      stopAlarm();
       startCountdown(SNOOZE_TIME, "snooze alarm");
     }
 
     function resetApp(){
+      stopAlarm();
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = null;
       timeLeft = 0;
